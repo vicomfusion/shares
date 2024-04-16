@@ -83,11 +83,11 @@
 </head>
 <body>
   <div class="container">
-   <img src="https://vicomfusion.github.io/vficons/icon.png" alt="vicon"> <h2>VicomFusion Distribution Sales</h2>
-    <p class="note">Before sharing, it is necessary to enter if there are expenses or not.</p>
+    <h2><img src="https://vicomfusion.github.io/vficons/icon.png" alt="vicon"> VicomFusion Distribution Sales</h2>
+    <p class="note">Before sharing, please indicate if there are any electric expenses.</p>
     <div class="input-container">
-      <label for="expensesAmount">Expenses Amount (if any):</label>
-      <input type="number" id="expensesAmount" min="0" step="any" value="0">
+     <label for="expensesAmount">Electricity Amount (if applicable):</label>
+     <input type="number" id="expensesAmount" min="0" step="any" value="0">
     </div>
     <div class="input-container">
       <label for="totalAmount">Total Sales:</label>
@@ -109,95 +109,108 @@
     <canvas id="myChart"></canvas>
     <p id="errorMessage" style="color: red; display: none;"></p>
     <p class="total"></p>
+    <div id="computationReports"></div> <!-- Computation reports container -->
   </div>
   <div class="footer">Powered by VicomFusion Team</div>
 
-  <script>
-    let myChart = null; // Declare a variable to hold the chart instance
+<script>
+  let myChart = null; // Declare a variable to hold the chart instance
+  function updateChart() {
+    const expensesAmount = parseFloat(document.getElementById('expensesAmount').value);
+    const totalAmount = parseFloat(document.getElementById('totalAmount').value);
+    const ceoPercentage = parseFloat(document.getElementById('ceoPercentage').value);
+    const cooPercentage = parseFloat(document.getElementById('cooPercentage').value);
+    const partnerPercentage = parseFloat(document.getElementById('partnerPercentage').value);
 
-    function updateChart() {
-      const expensesAmount = parseFloat(document.getElementById('expensesAmount').value);
-      const totalAmount = parseFloat(document.getElementById('totalAmount').value);
-      const ceoPercentage = parseFloat(document.getElementById('ceoPercentage').value);
-      const cooPercentage = parseFloat(document.getElementById('cooPercentage').value);
-      const partnerPercentage = parseFloat(document.getElementById('partnerPercentage').value);
+    if (ceoPercentage + cooPercentage + partnerPercentage > 100) {
+      document.getElementById('errorMessage').style.display = 'block';
+      document.getElementById('errorMessage').textContent = 'The total percentage exceeds 100%. Please adjust.';
+      return;
+    }
 
-      if (ceoPercentage + cooPercentage + partnerPercentage > 100) {
-        document.getElementById('errorMessage').style.display = 'block';
-        document.getElementById('errorMessage').textContent = 'The total percentage exceeds 100%. Please adjust.';
-        return;
-      }
+    document.getElementById('errorMessage').style.display = 'none';
 
-      document.getElementById('errorMessage').style.display = 'none';
+    const totalWithoutExpenses = totalAmount - expensesAmount;
+    const ceoShare = totalWithoutExpenses * (ceoPercentage / 100);
+    const cooShare = totalWithoutExpenses * (cooPercentage / 100);
+    const partnerShare = totalWithoutExpenses * (partnerPercentage / 100);
+    const totalDivided = ceoShare + cooShare + partnerShare;
 
-      const totalWithoutExpenses = totalAmount - expensesAmount;
-
-      const ceoShare = totalWithoutExpenses * (ceoPercentage / 100);
-      const cooShare = totalWithoutExpenses * (cooPercentage / 100);
-      const partnerShare = totalWithoutExpenses * (partnerPercentage / 100);
-
-      const totalDivided = ceoShare + cooShare + partnerShare;
-
-      const ctx = document.getElementById('myChart').getContext('2d');
-      
-      // Destroy the existing chart instance if it exists
-      if (myChart) {
-        myChart.destroy();
-      }
-
-      myChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['CEO', 'COO', 'Partner'],
-          datasets: [{
-            label: 'Sales Distribution',
-            data: [ceoShare, cooShare, partnerShare],
-            backgroundColor: [
-              'rgba(255, 99, 132, 0.7)',
-              'rgba(54, 162, 235, 0.7)',
-              'rgba(255, 206, 86, 0.7)',
-            ],
-            borderColor: [
-              'rgba(255, 99, 132, 1)',
-              'rgba(54, 162, 235, 1)',
-              'rgba(255, 206, 86, 1)',
-            ],
-            borderWidth: 1,
-          }],
+    const ctx = document.getElementById('myChart').getContext('2d');
+    // Destroy the existing chart instance if it exists
+    if (myChart) {
+      myChart.destroy();
+    }
+    myChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['CEO', 'COO', 'Partner'],
+        datasets: [{
+          label: 'Sales Distribution',
+          data: [ceoShare, cooShare, partnerShare],
+          backgroundColor: [
+            'rgba(255, 99, 132, 0.7)',
+            'rgba(54, 162, 235, 0.7)',
+            'rgba(255, 206, 86, 0.7)',
+          ],
+          borderColor: [
+            'rgba(255, 99, 132, 1)',
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 206, 86, 1)',
+          ],
+          borderWidth: 1,
+        }],
+      },
+      options: {
+        scales: {
+          yAxes: [{
+            ticks: {
+              beginAtZero: true,
+              callback: function(value, index, values) {
+                return '₱' + value.toLocaleString();
+              }
+            }
+          }]
         },
-        options: {
-          scales: {
-            yAxes: [{
-              ticks: {
-                beginAtZero: true,
-                callback: function(value, index, values) {
-                  return '$' + value.toLocaleString();
-                }
-              }
-            }]
-          },
-          title: {
-            display: true,
-            text: 'Sales Distribution'
-          },
-          legend: {
-            display: false,
-          },
-          plugins: {
-            datalabels: {
-              anchor: 'end',
-              align: 'end',
-              formatter: function(value, context) {
-                return '$' + value.toLocaleString();
-              }
+        title: {
+          display: false,
+        },
+        legend: {
+          display: false,
+        },
+        plugins: {
+          datalabels: {
+            anchor: 'end',
+            align: 'top',
+            color: '#000',
+            formatter: function(value, context) {
+              return '₱' + value.toLocaleString();
             }
           }
         }
-      });
+      }
+    });
 
-      const totalDividedElement = document.querySelector('.total');
-      totalDividedElement.textContent = `Total Amount Divided: $${totalDivided.toLocaleString()}`;
+    // Display computation reports
+    const computationReportsElement = document.getElementById('computationReports');
+    let reportsHTML = '<h3>Computation Reports</h3>';
+    reportsHTML += '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; background-color: #333; color: #fff; padding: 10px; border-radius: 5px;">';
+    if (ceoPercentage !== 0) {
+      reportsHTML += `<div style="font-weight: bold;">CEO Share:</div><div>₱${ceoShare.toLocaleString()}</div>`;
     }
-  </script>
+    if (cooPercentage !== 0) {
+      reportsHTML += `<div style="font-weight: bold;">COO Share:</div><div>₱${cooShare.toLocaleString()}</div>`;
+    }
+    if (partnerPercentage !== 0) {
+      reportsHTML += `<div style="font-weight: bold;">Partner Share:</div><div>₱${partnerShare.toLocaleString()}</div>`;
+    }
+    reportsHTML += `<div style="font-weight: bold;">Total Amount Divided:</div><div>₱${totalDivided.toLocaleString()} (Deducted Expenses: ₱${expensesAmount.toLocaleString()})</div>`;
+    reportsHTML += '</div>';
+    computationReportsElement.innerHTML = reportsHTML;
+  }
+</script>
+
+
+
 </body>
 </html>
