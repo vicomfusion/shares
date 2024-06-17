@@ -133,7 +133,21 @@
     const totalWithoutExpenses = totalAmount - expensesAmount;
     const ceoShare = totalWithoutExpenses * (ceoPercentage / 100);
     const cooShare = totalWithoutExpenses * (cooPercentage / 100);
-    const partnerShare = totalWithoutExpenses * (partnerPercentage / 100);
+    let partnerShare = totalWithoutExpenses * (partnerPercentage / 100);
+    
+    let partnerShareEmoji = "☕"; // Default emoji
+    let note = 'Electricity expenses not added to Partner\'s share.';
+    let electricityNote = '';
+    
+    // Add electricity amount to the partner's share if it has a value
+    if (expensesAmount > 0) {
+      const partnerShareOriginal = partnerShare;
+      partnerShare += expensesAmount;
+      partnerShareEmoji = "⚡";
+      note = `Electricity expenses (₱${expensesAmount.toLocaleString()}) were added to Partner's share ⚡.`;
+      electricityNote = ` The partner's share before adding electricity expenses was ₱${partnerShareOriginal.toLocaleString()}, and after adding the electricity expenses, it is ₱${partnerShare.toLocaleString()}.`;
+    }
+
     const totalDivided = ceoShare + cooShare + partnerShare;
 
     const ctx = document.getElementById('myChart').getContext('2d');
@@ -202,10 +216,11 @@
       reportsHTML += `<div style="font-weight: bold;">COO Share:</div><div>₱${cooShare.toLocaleString()}</div>`;
     }
     if (partnerPercentage !== 0) {
-      reportsHTML += `<div style="font-weight: bold;">Partner Share:</div><div>₱${partnerShare.toLocaleString()}</div>`;
+      reportsHTML += `<div style="font-weight: bold;">Partner Share:</div><div>₱${partnerShare.toLocaleString()} ${partnerShareEmoji}</div>`;
     }
     reportsHTML += `<div style="font-weight: bold;">Total Amount Divided:</div><div>₱${totalDivided.toLocaleString()} (Deducted Expenses: ₱${expensesAmount.toLocaleString()})</div>`;
     reportsHTML += '</div>';
+    reportsHTML += `<p style="margin-top: 10px; font-style: italic; color: #888;">${note}${electricityNote}</p>`;
     computationReportsElement.innerHTML = reportsHTML;
   }
 </script>
